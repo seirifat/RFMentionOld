@@ -37,7 +37,11 @@ open class RFMentionTextViewViewController: UIViewController {
     var cellHeight = 44
     
     var mentionedItems = [MentionedItem]()
-    var mentionAttributed = [NSAttributedStringKey.foregroundColor : UIColor.blue]
+    var currentMention = MentionedItem()
+    
+    var mentionAttributed: [NSAttributedStringKey : Any] = [NSAttributedStringKey.foregroundColor : UIColor.blue]
+    var defaultAttributed: [NSAttributedStringKey : Any] = [NSAttributedStringKey.foregroundColor : UIColor.black, NSAttributedStringKey.font : UIFont.systemFont(ofSize: 14)]
+    
     var searchString = ""
     
     private let tableWidth = Int(UIScreen.main.bounds.width)
@@ -61,6 +65,8 @@ open class RFMentionTextViewViewController: UIViewController {
         rfMentionItemsFilter = rfMentionItems
         textViewMention.delegate = self
         reloadViewTable()
+        
+        textViewMention.attributedText = NSAttributedString(string: "", attributes: [NSAttributedStringKey.font : textViewMention.font ?? UIFont.systemFont(ofSize: 14)])
         
         let views: [String: Any] = [
             "textViewMention": textViewMention,
@@ -135,7 +141,12 @@ open class RFMentionTextViewViewController: UIViewController {
     
 }
 
+// MARK: UITABLEVIEW DELEGATE DATASOURCE
+
 extension RFMentionTextViewViewController: UITableViewDelegate, UITableViewDataSource {
+    
+    // Datasource
+    
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return rfMentionItemsFilter.count
     }
@@ -151,34 +162,82 @@ extension RFMentionTextViewViewController: UITableViewDelegate, UITableViewDataS
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         isTextViewSearch = false
+        searchString = ""
+        
+        
         let mutableAttributed = NSMutableAttributedString()
         mutableAttributed.append(textViewMention.attributedText)
-        mutableAttributed.append(NSAttributedString(string: rfMentionItemsFilter[indexPath.row].text))
+        
+        var attributesStyle = mentionAttributed
+        attributesStyle[NSAttributedStringKey.font] = textViewMention.font
+        
+        currentMention.text = rfMentionItemsFilter[indexPath.row].text
+        currentMention.textAt = "@" + currentMention.text
+        currentMention.range = NSMakeRange(currentMention.range.location, currentMention.textAt.count)
+        
+        let mentionedText = NSAttributedString(string: currentMention.textAt, attributes: attributesStyle)
+        
+        if let selectedRange = textViewMention.selectedTextRange {
+            mutableAttributed.replaceCharacters(in: NSMakeRange(currentMention.range.location, searchString.count + 1), with: NSAttributedString(string: ""))
+            let cursorPosition = textViewMention.offset(from: textViewMention.beginningOfDocument, to: selectedRange.start)
+            print("\(cursorPosition)")
+            mutableAttributed.insert(mentionedText, at: cursorPosition - 1)
+            mutableAttributed.insert(NSAttributedString(string: " ", attributes: defaultAttributed), at: cursorPosition + rfMentionItemsFilter[indexPath.row].text.count)
+        }
+        
+        mutableAttributed.addAttribute(NSAttributedStringKey.backgroundColor, value: UIColor.yellow, range: currentMention.range)
+        
         textViewMention.attributedText = mutableAttributed
+        
+//        let mentRange = textViewMention.attributedText.string.range(of: "@" + rfMentionItemsFilter[indexPath.row].text)
+        
+//        self.mentionedItems.append(MentionedItem(text: rfMentionItemsFilter[indexPath.row].text, textAt: "@" + rfMentionItemsFilter[indexPath.row].text, range: mentRange))
+        print(currentMention)
+        
+        textViewMention.selectedRange = NSMakeRange(currentMention.range.location + currentMention.textAt.count + 1, 0)
+        
         self.hideList()
     }
     
 }
 
+// MARK: UITEXTVIEW DELEGATE
+
 extension RFMentionTextViewViewController: UITextViewDelegate {
     
     public func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         print(range)
-        if text == "" {
+        if isTextViewSearch == false && text == "" {
 //            let otherRange = textViewMention.text.startIndex..<textViewMention.text.endIndex
 //            textViewMention.text.removeSubrange(otherRange)
 //            return false
             
-            let arrayOfWords = textViewMention.text.components(separatedBy: " ")
-            let lastWord = arrayOfWords.last
-            if let lastWord = lastWord {
-                if lastWord.hasPrefix("@") {
-                    textViewMention.text = textViewMention.text.replacingOccurrences(of: lastWord, with: " ")
-                }
+//            let arrayOfWords = textViewMention.text.components(separatedBy: " ")
+//            let lastWord = arrayOfWords.last
+//            if let lastWord = lastWord {
+//                if lastWord.hasPrefix("@") {
+//                    textViewMention.text = textViewMention.text.replacingOccurrences(of: lastWord, with: " ")
+//                }
+//            }
+            
+            if currentMention.range.location...currentMention.range.location + currentMention.range.length ~= range.location {
+                let mutableAttributed = NSMutableAttributedString()
+                mutableAttributed.append(textViewMention.attributedText)
+                mutableAttributed.replaceCharacters(in: currentMention.range, with: NSAttributedString(string: ""))
+                textViewMention.attributedText = mutableAttributed
+                textViewMention.selectedRange = NSMakeRange(currentMention.range.location, 0)
             }
+            
+            isTextViewSearch = false
+            searchString = ""
+            rfMentionItemsFilter = rfMentionItems
+            tableViewMention.reloadData()
             return true
         }
         if text == "@" {
+            currentMention = MentionedItem(text: "", textAt: "@", range: range)
+            let tableHeight = rfMentionItemsFilter.count * cellHeight
+            self.tableViewMentionVConstraint[0].constant = CGFloat(tableHeight)
             isTextViewSearch = true
             rfMentionItemsFilter = rfMentionItems
             tableViewMention.reloadData()
