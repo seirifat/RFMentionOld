@@ -208,24 +208,14 @@ extension RFMentionTextViewViewController: UITextViewDelegate {
     public func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         print(range)
         if isTextViewSearch == false && text == "" {
-//            let otherRange = textViewMention.text.startIndex..<textViewMention.text.endIndex
-//            textViewMention.text.removeSubrange(otherRange)
-//            return false
             
-//            let arrayOfWords = textViewMention.text.components(separatedBy: " ")
-//            let lastWord = arrayOfWords.last
-//            if let lastWord = lastWord {
-//                if lastWord.hasPrefix("@") {
-//                    textViewMention.text = textViewMention.text.replacingOccurrences(of: lastWord, with: " ")
-//                }
-//            }
-            
-            if currentMention.range.location...currentMention.range.location + currentMention.range.length ~= range.location {
+            if currentMention.range.location...currentMention.range.location + currentMention.range.length - 1 ~= range.location {
                 let mutableAttributed = NSMutableAttributedString()
                 mutableAttributed.append(textViewMention.attributedText)
                 mutableAttributed.replaceCharacters(in: currentMention.range, with: NSAttributedString(string: ""))
                 textViewMention.attributedText = mutableAttributed
                 textViewMention.selectedRange = NSMakeRange(currentMention.range.location, 0)
+                return false
             }
             
             isTextViewSearch = false
