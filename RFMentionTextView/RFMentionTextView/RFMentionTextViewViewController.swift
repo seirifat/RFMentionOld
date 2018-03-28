@@ -172,6 +172,7 @@ extension RFMentionTextViewViewController: UITableViewDelegate, UITableViewDataS
         var attributesStyle = mentionAttributed
         attributesStyle[NSAttributedStringKey.font] = textViewMention.font
         
+        currentMention.id = rfMentionItemsFilter[indexPath.row].id
         currentMention.text = rfMentionItemsFilter[indexPath.row].text
         currentMention.textAt = "@" + currentMention.text
         currentMention.range = NSMakeRange(currentMention.range.location, currentMention.textAt.count)
@@ -258,7 +259,7 @@ extension RFMentionTextViewViewController: UITextViewDelegate {
             }
         }
         if text == "@" {
-            currentMention = MentionedItem(text: "", textAt: "@", range: range)
+            currentMention = MentionedItem(id: 0, text: "", textAt: "@", range: range)
             let tableHeight = rfMentionItemsFilter.count * cellHeight
             self.tableViewMentionVConstraint[0].constant = CGFloat(tableHeight)
             isTextViewSearch = true
