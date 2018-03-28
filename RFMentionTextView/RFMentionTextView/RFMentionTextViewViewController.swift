@@ -18,6 +18,7 @@ open class RFMentionItem {
 }
 
 struct MentionedItem {
+    var id: Int64 = 0
     var text = ""
     var textAt = ""
     var range = NSRange()
@@ -29,15 +30,15 @@ open class RFMentionTextViewViewController: UIViewController {
     var tableViewMention: UITableView!
     
     var rfMentionItems = [RFMentionItem]()
-    var rfMentionItemsFilter = [RFMentionItem]()
-    var tableViewMentionVConstraint = [NSLayoutConstraint]()
+    private var rfMentionItemsFilter = [RFMentionItem]()
+    private var tableViewMentionVConstraint = [NSLayoutConstraint]()
     
     var isTableHidden = true
     var isTextViewSearch = false
     var cellHeight = 44
     
     var mentionedItems = [MentionedItem]()
-    var currentMention = MentionedItem()
+    private var currentMention = MentionedItem()
     
     var mentionAttributed: [NSAttributedStringKey : Any] = [NSAttributedStringKey.foregroundColor : UIColor.blue]
     var defaultAttributed: [NSAttributedStringKey : Any] = [NSAttributedStringKey.foregroundColor : UIColor.black, NSAttributedStringKey.font : UIFont.systemFont(ofSize: 14)]
@@ -126,7 +127,7 @@ open class RFMentionTextViewViewController: UIViewController {
     
     private func searchText(searchString: String?) {
         let searchString = searchString ?? ""
-        print(searchString)
+//        print(searchString)
         if searchString != "" {
             rfMentionItemsFilter = rfMentionItems.filter({ item -> Bool in
                 return item.text.lowercased().contains(searchString.lowercased())
@@ -182,7 +183,7 @@ extension RFMentionTextViewViewController: UITableViewDelegate, UITableViewDataS
         if let selectedRange = textViewMention.selectedTextRange {
             mutableAttributed.replaceCharacters(in: NSMakeRange(currentMention.range.location, searchString.count + 1), with: NSAttributedString(string: ""))
             let cursorPosition = textViewMention.offset(from: textViewMention.beginningOfDocument, to: selectedRange.start)
-            print("\(cursorPosition)")
+//            print("\(cursorPosition)")
             mutableAttributed.insert(mentionedText, at: cursorPosition - 1)
             mutableAttributed.insert(NSAttributedString(string: " ", attributes: defaultAttributed), at: cursorPosition + rfMentionItemsFilter[indexPath.row].text.count)
             mutableAttributed.addAttributes(defaultAttributed, range: NSMakeRange(cursorPosition, 0))
@@ -192,7 +193,7 @@ extension RFMentionTextViewViewController: UITableViewDelegate, UITableViewDataS
         
         textViewMention.attributedText = mutableAttributed
         
-        print(currentMention)
+//        print(currentMention)
         
         textViewMention.selectedRange = NSMakeRange(currentMention.range.location + currentMention.textAt.count + 1, 0)
         
@@ -206,7 +207,7 @@ extension RFMentionTextViewViewController: UITableViewDelegate, UITableViewDataS
 extension RFMentionTextViewViewController: UITextViewDelegate {
     
     public func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
-        print(range)
+//        print(range)
         
         if text != "" && range.location - 1 >= 0 {
             let mutableAttributed = NSMutableAttributedString()
@@ -224,7 +225,7 @@ extension RFMentionTextViewViewController: UITextViewDelegate {
                             mutableAttributed.append(textViewMention.attributedText)
                             mutableAttributed.replaceCharacters(in: mentionedItems[idx].range, with: NSAttributedString(string: ""))
                             textViewMention.attributedText = mutableAttributed
-                            textViewMention.selectedRange = NSMakeRange(mentionedItems[idx].range.location - 1, 0)
+                            textViewMention.selectedRange = NSMakeRange(mentionedItems[idx].range.location, 0)
                             
                             for idxOther in 0 ..< mentionedItems.count {
                                 if idx != idxOther {
