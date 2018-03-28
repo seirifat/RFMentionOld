@@ -207,50 +207,32 @@ extension RFMentionTextViewViewController: UITextViewDelegate {
     
     public func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         print(range)
+        
+        if text != "" && range.location - 1 >= 0 {
+            let mutableAttributed = NSMutableAttributedString()
+            mutableAttributed.append(textViewMention.attributedText)
+            mutableAttributed.addAttributes(defaultAttributed, range: NSMakeRange(range.location - 1, 1))
+            textViewMention.attributedText = mutableAttributed
+        }
+        
         if isTextViewSearch == false && text == "" {
-            
             if mentionedItems.count > 0 {
                 for idx in 0 ..< mentionedItems.count {
                     if mentionedItems[idx].range.location...mentionedItems[idx].range.location + mentionedItems[idx].range.length - 1 ~= range.location {
                         let mutableAttributed = NSMutableAttributedString()
                         mutableAttributed.append(textViewMention.attributedText)
-                        mutableAttributed.addAttributes(defaultAttributed, range: mentionedItems[idx].range)
                         mutableAttributed.replaceCharacters(in: mentionedItems[idx].range, with: NSAttributedString(string: ""))
                         textViewMention.attributedText = mutableAttributed
                         textViewMention.selectedRange = NSMakeRange(mentionedItems[idx].range.location, 0)
                         
                         mentionedItems.remove(at: idx)
                         
-                        return false
+                        return true
                     } else if mentionedItems[idx].range.location > range.location {
                         mentionedItems[idx].range.location = mentionedItems[idx].range.location - 1
                     }
                 }
             }
-            
-//            if currentMention.range.location...currentMention.range.location + currentMention.range.length - 1 ~= range.location {
-//                let mutableAttributed = NSMutableAttributedString()
-//                mutableAttributed.append(textViewMention.attributedText)
-//                mutableAttributed.replaceCharacters(in: currentMention.range, with: NSAttributedString(string: ""))
-//                textViewMention.attributedText = mutableAttributed
-//                textViewMention.selectedRange = NSMakeRange(currentMention.range.location, 0)
-//
-//                for idx in 0 ..< mentionedItems.count {
-//                    if mentionedItems[idx].range.location > range.location {
-//                        mentionedItems[idx].range.location = mentionedItems[idx].range.location - 1
-//                    }
-//                }
-//
-//                return false
-//            } else {
-//                if mentionedItems.count > 0 {
-//                    for idx in 0 ..< mentionedItems.count {
-//                        if mentionedItems[idx].range.location > range.location {
-//                            mentionedItems[idx].range.location = mentionedItems[idx].range.location - 1
-//                        }
-//                    }
-//                }
-//            }
             
             isTextViewSearch = false
             searchString = ""
